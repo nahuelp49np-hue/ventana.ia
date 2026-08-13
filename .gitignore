@@ -1,0 +1,37 @@
+# entorno
+.venv/
+venv/
+env/
+
+# secretos
+.env
+.env.*
+!.env.example
+
+# python
+__pycache__/
+*.py[cod]
+*$py.class
+*.egg-info/
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+
+# sqlite y runtime
+*.db
+*.db-wal
+*.db-shm
+*.db-journal
+data/*.db
+data/*.db-*
+
+# fotos de ingreso (el directorio sí viaja, las fotos no)
+data/uploads/*
+!data/uploads/.gitkeep
+
+# sistema
+.DS_Store
+Thumbs.db
+*.log
+.idea/
+.vscode/

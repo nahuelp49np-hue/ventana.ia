@@ -1,0 +1,142 @@
+{% extends "base.html" %}
+{% block body_class %}has-confirm-bar{% endblock %}
+{% block content %}
+
+<div class="intake-sum">
+  <div>
+    <p class="intake-id">{{ intake.document_number or 'sin número' }}</p>
+    <p class="meta">{{ intake.supplier or 'origen —' }}{% if intake.document_date %}  ·  {{ intake.document_date | d }}{% endif %}  ·  <span id="line-total">{{ intake.lines|length }}</span> productos</p>
+  </div>
+  <p class="win-count" id="win-progress">0 / {{ intake.lines|length }}</p>
+</div>
+<p class="meta intake-hint">Cada producto tiene su ventana. Tocá un plazo o «No vence».</p>
+
+{% if intake.photo_path %}
+<button class="photo-toggle link-quiet" type="button" id="toggle-photo">Ver carátula</button>
+<div class="photo-thumb" id="photo-panel" hidden>
+  <img src="/foto/{{ intake.photo_path.split('/')[-1] }}" alt="Carátula">
+</div>
+{% endif %}
+
+{% if intake.warnings %}
+<ul class="warn-list">
+  {% for w in intake.warnings %}<li>{{ w }}</li>{% endfor %}
+</ul>
+{% endif %}
+
+<form id="form-confirmar" action="/ingreso/{{ intake.id }}/confirmar" method="post">
+  <input type="hidden" name="document_date" value="{{ intake.document_date or '' }}">
+
+  <div id="lines">
+    {% for line in intake.lines %}
+    <article class="prod-card{% if line.no_vence %} is-none is-ready{% elif line.expires_display %} is-ready{% endif %}" data-line>
+      <div class="prod-top">
+        <span class="meta">{{ '%02d' % loop.index }}</span>
+        <button class="link-quiet" type="button" data-remove-line>Quitar</button>
+      </div>
+      <input class="prod-name" name="line_name" type="text" list="cat" value="{{ line.raw_name }}" placeholder="Nombre del producto" autocomplete="off">
+      <input type="hidden" name="line_product_id" value="{{ line.product_id or '' }}">
+      <input type="hidden" name="line_novence" value="{{ '1' if line.no_vence else '0' }}" data-novence>
+      <input type="hidden" name="line_notes" value="{{ line.notes or '' }}">
+
+      <div class="prod-qty">
+        <button type="button" data-step="qty-{{ line.id }}" data-delta="-1" aria-label="menos">−</button>
+        <input id="qty-{{ line.id }}" name="line_qty" type="number" inputmode="decimal" step="0.01" min="0" value="{{ line.quantity }}">
+        <select name="line_unit" aria-label="unidad">
+          {% for u in ['un','kg','lt','cj','bulto'] %}
+          <option value="{{ u }}" {% if line.unit == u %}selected{% endif %}>{{ u }}</option>
+          {% endfor %}
+        </select>
+        <button type="button" data-step="qty-{{ line.id }}" data-delta="1" aria-label="más">+</button>
+      </div>
+
+      <div class="win-chips">
+        {% for d in shift_days %}
+        <button class="chip chip-btn" type="button" data-line-shift="{{ d }}">+{{ d }}</button>
+        {% endfor %}
+        <button class="chip chip-btn chip-none{% if line.no_vence %} is-on{% endif %}" type="button" data-line-none>No vence</button>
+      </div>
+      <input class="prod-date" name="line_expires" type="date" data-expires value="{{ line.expires_display or '' }}" aria-label="Fecha de vencimiento de este producto">
+    </article>
+    {% endfor %}
+  </div>
+
+  <datalist id="cat">
+    {% for p in products %}
+    <option value="{{ p.name }}"></option>
+    {% endfor %}
+  </datalist>
+
+  <p style="margin:14px 0 8px">
+    <button class="link-quiet" type="button" id="add-line">+ Agregar producto</button>
+  </p>
+
+  <details class="intake-meta">
+    <summary>Datos de la carátula</summary>
+    <div class="row-2" style="margin-top:12px">
+      <div class="field">
+        <label class="lbl" for="supplier">Origen</label>
+        <input id="supplier" name="supplier" type="text" value="{{ intake.supplier or '' }}">
+      </div>
+      <div class="field">
+        <label class="lbl" for="document_number">Carátula / FC</label>
+        <input id="document_number" name="document_number" type="text" value="{{ intake.document_number or '' }}">
+      </div>
+    </div>
+    <div class="field">
+      <label class="lbl" for="document_date_edit">Fecha de ingreso</label>
+      <input id="document_date_edit" type="date" value="{{ intake.document_date or '' }}" data-sync-date>
+    </div>
+    <div class="fill-rest" id="fill-rest">
+      <span class="lbl">Atajo — solo las que todavía no tienen ventana</span>
+      <div class="win-chips">
+        {% for d in shift_days %}
+        <button class="chip chip-btn" type="button" data-fill-rest="{{ d }}">+{{ d }}</button>
+        {% endfor %}
+        <button class="chip chip-btn" type="button" data-fill-rest="none">No vence</button>
+      </div>
+    </div>
+  </details>
+
+  <div class="confirm-bar">
+    <button class="glass glass-block" type="submit" id="btn-confirmar" formaction="/ingreso/{{ intake.id }}/confirmar">Confirmar ingreso</button>
+    <div class="confirm-links">
+      <button class="link-quiet" type="submit" formaction="/ingreso/{{ intake.id }}">Guardar borrador</button>
+      <span class="meta">·</span>
+      <button class="link-quiet" type="submit" formaction="/ingreso/{{ intake.id }}/descartar" formmethod="post">Descartar</button>
+    </div>
+  </div>
+</form>
+
+<template id="line-template">
+  <article class="prod-card" data-line>
+    <div class="prod-top">
+      <span class="meta" data-idx>00</span>
+      <button class="link-quiet" type="button" data-remove-line>Quitar</button>
+    </div>
+    <input class="prod-name" name="line_name" type="text" list="cat" placeholder="Nombre del producto" autocomplete="off">
+    <input type="hidden" name="line_product_id" value="">
+    <input type="hidden" name="line_novence" value="0" data-novence>
+    <input type="hidden" name="line_notes" value="">
+    <div class="prod-qty">
+      <button type="button" data-step="" data-delta="-1">−</button>
+      <input name="line_qty" type="number" inputmode="decimal" step="0.01" min="0" value="1">
+      <select name="line_unit">
+        <option value="un" selected>un</option>
+        <option value="kg">kg</option>
+        <option value="lt">lt</option>
+        <option value="cj">cj</option>
+        <option value="bulto">bulto</option>
+      </select>
+      <button type="button" data-step="" data-delta="1">+</button>
+    </div>
+    <div class="win-chips">
+      {% for d in shift_days %}
+      <button class="chip chip-btn" type="button" data-line-shift="{{ d }}">+{{ d }}</button>
+      {% endfor %}
+      <button class="chip chip-btn chip-none" type="button" data-line-none>No vence</button>
+    </div>
+    <input class="prod-date" name="line_expires" type="date" data-expires aria-label="Fecha de vencimiento de este producto">
+  </article>
+</template>
+{% endblock %}

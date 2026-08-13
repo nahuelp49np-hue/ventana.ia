@@ -1,0 +1,44 @@
+{% extends "base.html" %}
+{% block content %}
+<p style="max-width:32rem;margin:0 0 8px">La lectura arma los productos. Vos solo asignás el vencimiento.</p>
+
+{% if examples %}
+<p class="kicker" style="margin-top:18px">
+  <span class="idx">01</span>
+  <span class="rule"></span>
+  <span>Carátulas listas</span>
+</p>
+<div class="stack" style="margin-bottom:28px">
+  {% for ex in examples %}
+  <a class="btn btn-block" href="/capturar/ejemplo/{{ ex.slug }}">{{ ex.title }}</a>
+  {% endfor %}
+</div>
+{% endif %}
+
+<p class="kicker">
+  <span class="idx">02</span>
+  <span class="rule"></span>
+  <span>O una foto nueva</span>
+</p>
+{% if not vision_on %}
+<p class="meta" style="margin:0 0 12px">Si la foto es una de las carátulas de JoseG (Amstel / Arcor), se reconoce sola. Para papeles nuevos hace falta XAI_API_KEY.</p>
+{% endif %}
+
+<form id="form-captura" action="/capturar" method="post" enctype="multipart/form-data">
+  <div class="frame" style="margin-bottom:18px">
+    <span class="corner corner-tl"></span>
+    <span class="corner corner-tr"></span>
+    <span class="corner corner-bl"></span>
+    <span class="corner corner-br"></span>
+    <div class="scan-line"></div>
+    <img id="frame-preview" alt="" hidden>
+    <div class="frame-copy">
+      <div style="width:36px;height:40px;margin:0 auto 12px;opacity:.7">{% include "partials/mark.html" %}</div>
+      <p>Tocar para abrir la cámara</p>
+      <p class="meta">JPG · PNG · carátula sobre la mesa</p>
+    </div>
+    <input class="file-hit" id="foto" name="foto" type="file" accept="image/*" capture="environment">
+  </div>
+  <button class="glass glass-block" type="submit">Leer productos</button>
+</form>
+{% endblock %}

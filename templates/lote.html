@@ -1,0 +1,106 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="hero-win">
+  <div>
+    {% if batch.no_vence %}
+    <span class="display-num" style="font-size:clamp(2.6rem,12vw,4.2rem)">—</span>
+    {% else %}
+    <span class="display-num">{% if batch.days_left is not none %}{{ batch.days_left }}{% else %}—{% endif %}</span>
+    {% endif %}
+  </div>
+  <div class="side">
+    <p class="tag meta" style="color: inherit">{{ batch.level_label }}</p>
+    <p class="meta" style="margin-top:8px">{{ batch.window_label }}</p>
+    {% if not batch.no_vence %}
+    <p class="meta">vence {{ batch.expires_at | d }}</p>
+    {% endif %}
+  </div>
+</div>
+
+<h1 style="font-size:1.35rem;font-weight:500;letter-spacing:-0.02em;margin:0 0 8px">{{ batch.display_name }}</h1>
+<p class="meta">
+  {{ batch.quantity_current | q(batch.unit) }}
+  ·  lote {{ '%03d' % batch.id }}
+  ·  ingreso {{ batch.received_at | d }}
+  ·  {{ batch.status_label }}
+</p>
+{% if batch.sku %}<p class="meta" style="margin-top:6px">SKU {{ batch.sku }}</p>{% endif %}
+{% if batch.notes %}<p style="margin:12px 0 0;color:var(--bone-dim)">{{ batch.notes }}</p>{% endif %}
+
+<div class="hr"></div>
+
+{% if batch.status in ['activo', 'promocion'] %}
+<div class="stack">
+  <form action="/lote/{{ batch.id }}" method="post">
+    <input type="hidden" name="action" value="retirar">
+    <button class="btn btn-block btn-danger" type="submit">Retirar de circulación</button>
+  </form>
+  {% if batch.status != 'promocion' %}
+  <form action="/lote/{{ batch.id }}" method="post">
+    <input type="hidden" name="action" value="promocion">
+    <button class="btn btn-block btn-promo" type="submit">Activar promoción</button>
+  </form>
+  {% else %}
+  <form action="/lote/{{ batch.id }}" method="post">
+    <input type="hidden" name="action" value="reactivar">
+    <button class="btn btn-block btn-ghost" type="submit">Sacar de promoción</button>
+  </form>
+  {% endif %}
+</div>
+{% else %}
+<form action="/lote/{{ batch.id }}" method="post">
+  <input type="hidden" name="action" value="reactivar">
+  <button class="btn btn-block" type="submit">Reactivar lote</button>
+</form>
+{% endif %}
+
+<div class="hr"></div>
+
+<form action="/lote/{{ batch.id }}" method="post">
+  <input type="hidden" name="action" value="cantidad">
+  <label class="lbl" for="quantity">Cantidad viva</label>
+  <div class="stepper" style="margin-bottom:10px">
+    <button type="button" data-step="quantity" data-delta="-1">−</button>
+    <input id="quantity" name="quantity" type="number" step="0.01" min="0" value="{{ batch.quantity_current }}">
+    <button type="button" data-step="quantity" data-delta="1">+</button>
+  </div>
+  <button class="btn btn-block" type="submit">Actualizar cantidad</button>
+</form>
+
+<div class="hr"></div>
+
+<form action="/lote/{{ batch.id }}" method="post">
+  <input type="hidden" name="action" value="vence">
+  <label class="lbl" for="expires_at">Vencimiento</label>
+  <input id="expires_at" name="expires_at" type="date" value="{{ '' if batch.no_vence else batch.expires_at }}" style="margin-bottom:10px">
+  <button class="btn btn-block btn-ghost" type="submit">Corregir vencimiento</button>
+</form>
+
+<div class="hr"></div>
+
+<form action="/lote/{{ batch.id }}" method="post">
+  <input type="hidden" name="action" value="notas">
+  <label class="lbl" for="notes">Notas</label>
+  <textarea id="notes" name="notes">{{ batch.notes or '' }}</textarea>
+  <button class="btn btn-block btn-ghost" type="submit" style="margin-top:10px">Guardar notas</button>
+</form>
+
+{% if actions %}
+<div class="hr"></div>
+<p class="kicker"><span class="idx">//</span><span class="rule"></span><span>Movimientos de este lote</span></p>
+<table class="table">
+  <thead>
+    <tr><th>Cuándo</th><th>Acción</th><th>Cant.</th></tr>
+  </thead>
+  <tbody>
+    {% for a in actions %}
+    <tr>
+      <td class="meta">{{ a.created_at | dt }}</td>
+      <td>{{ a.kind }}{% if a.user_name %}<br><span class="meta">{{ a.user_name }}</span>{% endif %}</td>
+      <td class="meta">{{ a.quantity_before | q }} → {{ a.quantity_after | q }}</td>
+    </tr>
+    {% endfor %}
+  </tbody>
+</table>
+{% endif %}
+{% endblock %}

@@ -1,0 +1,64 @@
+{% extends "base.html" %}
+{% block content %}
+<form method="get" action="/productos" style="margin-bottom:18px">
+  <label class="lbl" for="q">Buscar</label>
+  <input id="q" name="q" type="search" value="{{ q }}" placeholder="Nombre o SKU">
+</form>
+
+<form method="post" action="/productos" style="margin-bottom:28px">
+  <p class="kicker"><span class="idx">//</span><span class="rule"></span><span>Nuevo producto</span></p>
+  <div class="field">
+    <label class="lbl" for="name">Nombre</label>
+    <input id="name" name="name" type="text" required>
+  </div>
+  <div class="row-2">
+    <div class="field">
+      <label class="lbl" for="sku">SKU</label>
+      <input id="sku" name="sku" type="text">
+    </div>
+    <div class="field">
+      <label class="lbl" for="category">Rubro</label>
+      <input id="category" name="category" type="text" placeholder="Lácteos">
+    </div>
+  </div>
+  <div class="row-2">
+    <div class="field">
+      <label class="lbl" for="unit">Unidad</label>
+      <select id="unit" name="unit">
+        <option value="un">un</option>
+        <option value="kg">kg</option>
+        <option value="lt">lt</option>
+        <option value="cj">cj</option>
+        <option value="bulto">bulto</option>
+      </select>
+    </div>
+    <div class="field">
+      <label class="lbl" for="default_life_days">Vida útil default (días)</label>
+      <input id="default_life_days" name="default_life_days" type="number" min="0" step="1">
+    </div>
+  </div>
+  <button class="btn" type="submit">Registrar</button>
+</form>
+
+{% if not products %}
+<p class="empty">Sin productos.</p>
+{% else %}
+<table class="table">
+  <thead>
+    <tr><th>Producto</th><th>Unidad</th><th>Vida</th></tr>
+  </thead>
+  <tbody>
+    {% for p in products %}
+    <tr>
+      <td>
+        {{ p.name }}
+        <div class="meta">{% if p.sku %}{{ p.sku }} · {% endif %}{{ p.category or 'sin rubro' }}</div>
+      </td>
+      <td class="meta">{{ p.unit }}</td>
+      <td class="meta">{% if p.default_life_days %}{{ p.default_life_days }}d{% else %}—{% endif %}</td>
+    </tr>
+    {% endfor %}
+  </tbody>
+</table>
+{% endif %}
+{% endblock %}

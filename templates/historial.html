@@ -1,0 +1,58 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="filters">
+  <a class="chip {% if not kind %}is-on{% endif %}" href="/historial">Todos</a>
+  <a class="chip {% if kind == 'retirar' %}is-on{% endif %}" href="/historial?k=retirar">Retiros</a>
+  <a class="chip {% if kind == 'promocion' %}is-on{% endif %}" href="/historial?k=promocion">Promociones</a>
+  <a class="chip {% if kind == 'ingresar' %}is-on{% endif %}" href="/historial?k=ingresar">Ingresos</a>
+</div>
+
+{% if not actions %}
+<p class="empty">Sin movimientos.</p>
+{% else %}
+<table class="table">
+  <thead>
+    <tr>
+      <th>Cuándo</th>
+      <th>Lote</th>
+      <th>Hecho</th>
+    </tr>
+  </thead>
+  <tbody>
+    {% for a in actions %}
+    <tr>
+      <td class="meta">{{ a.created_at | dt }}</td>
+      <td>
+        {% if a.batch_id %}
+        <a href="/lote/{{ a.batch_id }}">{{ a.display_name or ('lote ' ~ a.batch_id) }}</a>
+        {% else %}—{% endif %}
+        {% if a.notes %}<div class="meta">{{ a.notes }}</div>{% endif %}
+      </td>
+      <td>
+        {{ a.kind }}
+        <div class="meta">{{ a.user_name or '—' }} · {{ a.quantity_before | q }} → {{ a.quantity_after | q }}</div>
+      </td>
+    </tr>
+    {% endfor %}
+  </tbody>
+</table>
+{% endif %}
+
+{% if closed %}
+<div class="hr"></div>
+<p class="kicker"><span class="idx">//</span><span class="rule"></span><span>Fuera de circulación</span></p>
+{% for b in closed %}
+<article class="lot lvl-{{ b.level }}">
+  <div>
+    <div class="tag">{{ b.status_label }}</div>
+    <a class="lot-name" href="/lote/{{ b.id }}">{{ b.display_name }}</a>
+  </div>
+  <div class="lot-win">
+    <span class="display-num">{{ b.days_left if b.days_left is not none else '—' }}</span>
+    <span class="u">{{ b.window_label }}</span>
+  </div>
+  <p class="meta lot-meta">{{ b.quantity_current | q(b.unit) }}  ·  lote {{ '%03d' % b.id }}  ·  vence {{ b.expires_at | d }}</p>
+</article>
+{% endfor %}
+{% endif %}
+{% endblock %}

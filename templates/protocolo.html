@@ -1,0 +1,61 @@
+{% extends "base.html" %}
+{% block content %}
+<p style="margin:0 0 20px;max-width:32rem">Los umbrales definen cuándo un lote entra a cada ventana. No son decoración: son la regla reescrita.</p>
+
+<form method="post" action="/protocolo">
+  <div class="field">
+    <label class="lbl" for="store_name">Operación</label>
+    <input id="store_name" name="store_name" type="text" value="{{ settings.store_name }}">
+  </div>
+
+  <div class="row-3" style="grid-template-columns:1fr 1fr 1fr">
+    <div class="field">
+      <label class="lbl" for="threshold_critico">Crítico (días)</label>
+      <input id="threshold_critico" name="threshold_critico" type="number" min="0" value="{{ settings.threshold_critico }}">
+    </div>
+    <div class="field">
+      <label class="lbl" for="threshold_advertencia">Advertencia</label>
+      <input id="threshold_advertencia" name="threshold_advertencia" type="number" min="0" value="{{ settings.threshold_advertencia }}">
+    </div>
+    <div class="field">
+      <label class="lbl" for="threshold_preventivo">Preventivo</label>
+      <input id="threshold_preventivo" name="threshold_preventivo" type="number" min="0" value="{{ settings.threshold_preventivo }}">
+    </div>
+  </div>
+
+  <div class="hr"></div>
+  <p class="kicker"><span class="idx">//</span><span class="rule"></span><span>Canal Telegram</span></p>
+
+  <label class="check">
+    <input type="checkbox" name="telegram_enabled" value="1" {% if settings.telegram_enabled == '1' %}checked{% endif %}>
+    Alertas activas
+  </label>
+  <label class="check">
+    <input type="checkbox" name="digest_include_preventivo" value="1" {% if settings.digest_include_preventivo == '1' %}checked{% endif %}>
+    Incluir preventivo en el digest
+  </label>
+
+  <div class="field">
+    <label class="lbl" for="telegram_bot_token">Token del bot</label>
+    <input id="telegram_bot_token" name="telegram_bot_token" type="text" value="{{ settings.telegram_bot_token }}" autocomplete="off">
+  </div>
+  <div class="field">
+    <label class="lbl" for="telegram_chat_id">Chat ID</label>
+    <input id="telegram_chat_id" name="telegram_chat_id" type="text" value="{{ settings.telegram_chat_id }}">
+  </div>
+  <div class="field">
+    <label class="lbl" for="alert_hour">Hora del digest</label>
+    <input id="alert_hour" name="alert_hour" type="time" value="{{ settings.alert_hour }}">
+  </div>
+
+  <button class="glass" type="submit">Guardar protocolo</button>
+</form>
+
+<form method="post" action="/protocolo/probar" style="margin-top:14px">
+  <button class="btn btn-ghost" type="submit">Enviar señal de prueba</button>
+</form>
+
+<div class="hr"></div>
+<p class="meta">Visión · {% if vision_on %}Grok 4.6 activo{% else %}apagada (XAI_API_KEY ausente){% endif %}</p>
+<p class="meta" style="margin-top:8px">Las señales críticas salen apenas se detectan (cada 15 min). El digest diario recorre advertencia{% if settings.digest_include_preventivo == '1' %} y preventivo{% endif %}.</p>
+{% endblock %}

@@ -1,0 +1,42 @@
+{% extends "base.html" %}
+{% block content %}
+<form method="post" action="/usuarios" style="margin-bottom:28px">
+  <div class="field">
+    <label class="lbl" for="display_name">Nombre</label>
+    <input id="display_name" name="display_name" type="text" required>
+  </div>
+  <div class="row-2">
+    <div class="field">
+      <label class="lbl" for="username">Usuario</label>
+      <input id="username" name="username" type="text" autocapitalize="off" required>
+    </div>
+    <div class="field">
+      <label class="lbl" for="password">Clave</label>
+      <input id="password" name="password" type="text" required>
+    </div>
+  </div>
+  <div class="field">
+    <label class="lbl" for="role">Rol</label>
+    <select id="role" name="role">
+      <option value="deposito">depósito</option>
+      <option value="admin">admin</option>
+    </select>
+  </div>
+  <button class="btn" type="submit">Activar operador</button>
+</form>
+
+<table class="table">
+  <thead>
+    <tr><th>Operador</th><th>Rol</th><th>Último acceso</th></tr>
+  </thead>
+  <tbody>
+    {% for u in users %}
+    <tr>
+      <td>{{ u.display_name }}<div class="meta">{{ u.username }}</div></td>
+      <td class="meta">{{ u.role }}</td>
+      <td class="meta">{{ u.last_login_at | dt }}</td>
+    </tr>
+    {% endfor %}
+  </tbody>
+</table>
+{% endblock %}

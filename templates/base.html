@@ -1,0 +1,96 @@
+<!doctype html>
+<html lang="es-AR">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="theme-color" content="#0A0A0A">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="color-scheme" content="dark">
+  <title>{{ page_title }}</title>
+  <link rel="icon" href="/static/img/favicon.svg" type="image/svg+xml">
+  <link rel="manifest" href="/static/manifest.json">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Geist+Mono:wght@400;500&family=Geist:wght@400;500;600&family=Instrument+Serif:ital@0;1&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="/static/css/system.css?v=3">
+</head>
+<body class="{% block body_class %}{% endblock %}">
+  <div class="backdrop" aria-hidden="true">
+    <div class="system-grid"></div>
+    <div class="system-scan"></div>
+    <div class="noise"></div>
+  </div>
+
+  {% if user %}
+  <div class="app app-auth">
+    <aside class="rail">
+      <a href="/control" class="brand">
+        {% include "partials/mark.html" %}
+      </a>
+      <div class="wordmark">ventana<span class="dot">.</span><span class="ia">ia</span></div>
+      <a href="/control" class="{% if nav == 'control' %}is-on{% endif %}">Control</a>
+      <a href="/capturar" class="{% if nav == 'capturar' %}is-on{% endif %}">Capturar</a>
+      <a href="/historial" class="{% if nav == 'historial' %}is-on{% endif %}">Historial</a>
+      <a href="/productos" class="{% if nav == 'productos' %}is-on{% endif %}">Productos</a>
+      {% if user.role == 'admin' %}
+      <a href="/protocolo" class="{% if nav == 'protocolo' %}is-on{% endif %}">Protocolo</a>
+      <a href="/usuarios" class="{% if nav == 'usuarios' %}is-on{% endif %}">Operadores</a>
+      {% endif %}
+      <div class="grow"></div>
+      <p class="meta">{{ user.display_name }} · {{ user.role }}</p>
+      <form action="/salir" method="post"><button class="link-quiet" type="submit" style="background:none;border:0;padding:10px 8px">Salir</button></form>
+    </aside>
+
+    <div>
+      <header class="topbar">
+        <a class="brand" href="/control">
+          {% include "partials/mark.html" %}
+          <span class="wordmark">ventana<span class="dot">.</span><span class="ia">ia</span></span>
+        </a>
+        <div class="who">{{ user.display_name }}</div>
+      </header>
+      <main class="shell">
+        <p class="kicker">
+          <span class="idx">{{ kicker_index }}</span>
+          <span class="rule"></span>
+          <span data-kicker-label>{{ kicker }}</span>
+        </p>
+        {% if flash %}
+        <div class="flash flash-{{ flash.tone }}">{{ flash.message }}</div>
+        {% endif %}
+        {% block content %}{% endblock %}
+        <nav class="more-nav rail-hide">
+          <a class="link-quiet" href="/productos">Productos</a>
+          {% if user.role == 'admin' %}
+          <a class="link-quiet" href="/protocolo">Protocolo</a>
+          <a class="link-quiet" href="/usuarios">Operadores</a>
+          {% endif %}
+          <form action="/salir" method="post">
+            <button class="link-quiet" type="submit" style="background:none;border:0;padding:0">Salir</button>
+          </form>
+        </nav>
+        <footer class="footer-seal">
+          <span>hecho por runa</span>
+          <span>{{ store_name }} · {{ SYSTEM_CODE }}</span>
+        </footer>
+      </main>
+    </div>
+
+    <nav class="dock" aria-label="Navegación">
+      <a href="/control" class="{% if nav == 'control' %}is-on{% endif %}">Control</a>
+      <a class="dock-capture" href="/capturar" aria-label="Capturar remito">
+        {% include "partials/mark.html" %}
+      </a>
+      <a href="/historial" class="{% if nav == 'historial' %}is-on{% endif %}">Historial</a>
+    </nav>
+  </div>
+  {% else %}
+  <div class="app">
+    {% block gate %}{% endblock %}
+  </div>
+  {% endif %}
+
+  <script src="/static/js/system.js?v=3"></script>
+</body>
+</html>

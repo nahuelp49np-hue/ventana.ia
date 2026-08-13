@@ -1,0 +1,69 @@
+{% extends "base.html" %}
+{% block content %}
+<section class="strip" aria-label="Ventanas">
+  <a class="cell lvl-critico {% if filtro == 'critico' %}is-on{% endif %}" href="/control?v=critico">
+    <span class="display-num">{{ counts.vencido + counts.critico }}</span>
+    <span class="lbl-s">Crítico</span>
+  </a>
+  <a class="cell lvl-advertencia {% if filtro == 'advertencia' %}is-on{% endif %}" href="/control?v=advertencia">
+    <span class="display-num">{{ counts.advertencia }}</span>
+    <span class="lbl-s">Advertencia</span>
+  </a>
+  <a class="cell lvl-preventivo {% if filtro == 'preventivo' %}is-on{% endif %}" href="/control?v=preventivo">
+    <span class="display-num">{{ counts.preventivo }}</span>
+    <span class="lbl-s">Preventivo</span>
+  </a>
+  <a class="cell lvl-estable {% if filtro == 'estable' %}is-on{% endif %}" href="/control?v=estable">
+    <span class="display-num">{{ counts.estable }}</span>
+    <span class="lbl-s">Estable</span>
+  </a>
+</section>
+
+<div class="filters">
+  <a class="chip {% if filtro == 'todos' %}is-on{% endif %}" href="/control">Todos · {{ counts.total }}</a>
+  <a class="chip {% if filtro == 'promocion' %}is-on{% endif %}" href="/control?v=promocion">Promoción · {{ counts.promocion }}</a>
+</div>
+
+{% if not batches %}
+  <p class="empty">Sin lotes en esta ventana.</p>
+{% endif %}
+
+{% for b in batches %}
+<article class="lot lvl-{{ b.level }}">
+  <div>
+    <div class="tag">{{ b.level_label }}{% if b.status == 'promocion' %} · {{ b.status_label }}{% endif %}</div>
+    <a class="lot-name" href="/lote/{{ b.id }}">{{ b.display_name }}</a>
+  </div>
+  <div class="lot-win">
+    {% if b.no_vence %}
+    <span class="display-num" style="font-size:1.7rem">—</span>
+    <span class="u">no vence</span>
+    {% else %}
+    <span class="display-num">{% if b.days_left is not none %}{{ b.days_left }}{% else %}—{% endif %}</span>
+    <span class="u">{% if b.days_left is not none and b.days_left < 0 %}vencido{% elif b.days_left == 0 %}hoy{% elif b.days_left == 1 %}día{% else %}días{% endif %}</span>
+    {% endif %}
+  </div>
+  <p class="meta lot-meta">{{ b.quantity_current | q(b.unit) }}  ·  lote {{ '%03d' % b.id }}  ·  vence {{ b.expires_at | d }}</p>
+  {% if b.status in ['activo', 'promocion'] %}
+  <div class="actions-inline">
+    <form action="/lote/{{ b.id }}" method="post">
+      <input type="hidden" name="action" value="retirar">
+      <button class="btn btn-block btn-danger" type="submit">Retirar</button>
+    </form>
+    {% if b.status != 'promocion' %}
+    <form action="/lote/{{ b.id }}" method="post">
+      <input type="hidden" name="action" value="promocion">
+      <button class="btn btn-block btn-promo" type="submit">Promoción</button>
+    </form>
+    {% else %}
+    <a class="btn btn-block btn-ghost" href="/lote/{{ b.id }}">Abrir</a>
+    {% endif %}
+  </div>
+  {% endif %}
+</article>
+{% endfor %}
+
+<p class="meta" style="margin-top:18px">
+  Umbrales · crítico ≤ {{ thresholds.critico }}d · advertencia ≤ {{ thresholds.advertencia }}d · preventivo ≤ {{ thresholds.preventivo }}d
+</p>
+{% endblock %}

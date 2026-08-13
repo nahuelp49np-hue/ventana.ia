@@ -1,0 +1,33 @@
+{% extends "base.html" %}
+{% block body_class %}gate-body{% endblock %}
+{% block gate %}
+<section class="gate">
+  <div class="gate-inner">
+    <p class="kicker">
+      <span class="idx">00</span>
+      <span class="rule"></span>
+      <span>Protocolo de acceso</span>
+    </p>
+    <div class="gate-mark">{% include "partials/mark.html" %}</div>
+    <div class="wordmark">ventana<span class="dot">.</span><span class="ia">ia</span></div>
+    <p class="gate-sub">{{ SYSTEM_CODE }}  ·  {{ store_name }}</p>
+
+    {% if flash %}
+    <div class="flash flash-{{ flash.tone }}">{{ flash.message }}</div>
+    {% endif %}
+
+    <form method="post" action="/acceso" autocomplete="username">
+      <div class="field">
+        <label class="lbl" for="username">Usuario</label>
+        <input id="username" name="username" type="text" autocapitalize="off" autocomplete="username" required>
+      </div>
+      <div class="field">
+        <label class="lbl" for="password">Clave</label>
+        <input id="password" name="password" type="password" autocomplete="current-password" required>
+      </div>
+      <button class="glass glass-block" type="submit">Ingresar</button>
+    </form>
+    <p class="seal">hecho por runa</p>
+  </div>
+</section>
+{% endblock %}
