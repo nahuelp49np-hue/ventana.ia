@@ -1,6 +1,5 @@
 from __future__ import annotations
 
-import base64
 import io
 import json
 import re
@@ -8,7 +7,7 @@ from collections import OrderedDict
 from pathlib import Path
 from typing import Any
 
-from ventana.config import XAI_API_KEY, XAI_BASE_URL, XAI_MODEL
+from ventana.config import GEMINI_API_KEY, GEMINI_MODEL
 
 EXTRACT_PROMPT = """Sos el lector de documentos de ventana.ia, sistema de control de vida útil de Súper Vivar (Posadas, Misiones, Argentina).
 
@@ -69,10 +68,10 @@ Reglas generales:
 
 
 def vision_available() -> bool:
-    return bool(XAI_API_KEY)
+    return bool(GEMINI_API_KEY)
 
 
-def _prepare_jpeg_b64(path: Path, max_side: int = 2048) -> str:
+def _prepare_jpeg_bytes(path: Path, max_side: int = 2048) -> bytes:
     from PIL import Image
 
     try:
@@ -90,7 +89,7 @@ def _prepare_jpeg_b64(path: Path, max_side: int = 2048) -> str:
         image = image.resize((int(w * scale), int(h * scale)), Image.Resampling.LANCZOS)
     buf = io.BytesIO()
     image.save(buf, format="JPEG", quality=85, optimize=True)
-    return base64.b64encode(buf.getvalue()).decode("ascii")
+    return buf.getvalue()
 
 
 def _parse_json(text: str) -> dict[str, Any]:
@@ -263,7 +262,7 @@ def normalize(payload: dict[str, Any]) -> dict[str, Any]:
 
 
 def extract_document(image_path: Path) -> dict[str, Any]:
-    """Lee una carátula / remito. Sin clave, estructura vacía con aviso."""
+    """Lee una carátula / remito con Gemini. Sin clave, estructura vacía."""
     empty = {
         "document_type": None,
         "source_system": None,
@@ -277,48 +276,38 @@ def extract_document(image_path: Path) -> dict[str, Any]:
         "warnings": [],
         "raw_text": "",
     }
-    if not XAI_API_KEY:
+    if not GEMINI_API_KEY:
         empty["warnings"] = [
-            "Visión no configurada. Cargá las líneas a mano, usá una carátula de ejemplo o definí XAI_API_KEY."
+            "Visión no configurada. Definí GEMINI_API_KEY para leer la foto."
         ]
         return empty
 
     try:
-        b64 = _prepare_jpeg_b64(image_path)
+        jpeg = _prepare_jpeg_bytes(image_path)
     except Exception as exc:
         empty["warnings"] = [f"No se pudo preparar la imagen: {exc}"]
         return empty
 
-    from openai import OpenAI
-    import httpx
-
-    client = OpenAI(
-        api_key=XAI_API_KEY,
-        base_url=XAI_BASE_URL,
-        timeout=httpx.Timeout(120.0),
-    )
-    data_url = f"data:image/jpeg;base64,{b64}"
     try:
-        response = client.responses.create(
-            model=XAI_MODEL,
-            input=[
-                {
-                    "role": "user",
-                    "content": [
-                        {"type": "input_image", "image_url": data_url, "detail": "high"},
-                        {"type": "input_text", "text": EXTRACT_PROMPT},
-                    ],
-                }
+        from google import genai
+        from google.genai import types
+
+        client = genai.Client(api_key=GEMINI_API_KEY)
+        response = client.models.generate_content(
+            model=GEMINI_MODEL,
+            contents=[
+                EXTRACT_PROMPT,
+                types.Part.from_bytes(data=jpeg, mime_type="image/jpeg"),
             ],
+            config=types.GenerateContentConfig(
+                temperature=0.1,
+                response_mime_type="application/json",
+            ),
         )
-        text = getattr(response, "output_text", None) or ""
+        text = getattr(response, "text", None) or ""
         if not text:
-            chunks = []
-            for item in getattr(response, "output", []) or []:
-                for block in getattr(item, "content", []) or []:
-                    if getattr(block, "type", "") in {"output_text", "text"}:
-                        chunks.append(getattr(block, "text", "") or "")
-            text = "\n".join(chunks)
+            empty["warnings"] = ["Gemini no devolvió texto."]
+            return empty
         parsed = normalize(_parse_json(text))
         parsed["raw_text"] = text
         if not parsed["lines"]:

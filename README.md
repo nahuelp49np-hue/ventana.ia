@@ -27,7 +27,7 @@ El depósito entra con el celular, con las manos ocupadas, en siete segundos. St
 
 - Python 3.11 o 3.12
 - Un celular en la misma red (depósito)
-- Opcional: clave SpaceXAI (`XAI_API_KEY`) para leer remitos
+- Opcional: clave Gemini (`GEMINI_API_KEY`) para leer remitos
 - Opcional: bot de Telegram para alertas
 
 Sin clave de visión el sistema **igual funciona**: se carga el remito y las líneas se escriben a mano.
@@ -79,19 +79,18 @@ La IP local se ve con `ipconfig` (IPv4). El firewall de Windows tiene que dejar 
 
 Cámbialos en producción (Protocolo no cambia claves; creá un admin nuevo en Operadores y dejá de usar estos).
 
-La base nace con lotes de demostración del catálogo real de Súper Vivar (Tregar, La Paulina, fiambrería, carnicería) cubriendo crítico / advertencia / preventivo / estable / promoción / retiro.
+La base arranca vacía. Los lotes nacen cuando el depósito confirma un ingreso.
 
 ---
 
 ## Visión (foto del remito)
 
-1. Creá una clave en [console.x.ai](https://console.x.ai)
-2. En `.env`: `XAI_API_KEY=xai-...`
-3. Reiniciá. En Captura, el kicker pasa a leer el documento con **Grok 4.6**.
+1. Creá una clave en [Google AI Studio](https://aistudio.google.com/apikey)
+2. En `.env` (o en Render → Environment): `GEMINI_API_KEY=...`
+3. Opcional: `GEMINI_MODEL=gemini-2.5-flash`
+4. Reiniciá. En Captura, la foto se lee con **Gemini**.
 
-Modelos y endpoint: `https://api.x.ai/v1` · `grok-4.6`.
-
-Si más adelante querés calibrar la lectura, mandá remitos reales de los proveedores de Vivar. El prompt ya ignora IVA, CAE y totales; con 20 documentos del territorio se vuelve preciso.
+Sin clave, el sistema no extrae productos de la foto.
 
 ---
 

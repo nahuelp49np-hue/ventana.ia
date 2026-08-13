@@ -56,6 +56,6 @@
 </form>
 
 <div class="hr"></div>
-<p class="meta">Visión · {% if vision_on %}Grok 4.6 activo{% else %}apagada (XAI_API_KEY ausente){% endif %}</p>
+<p class="meta">Visión · {% if vision_on %}Gemini activo{% else %}apagada (GEMINI_API_KEY ausente){% endif %}</p>
 <p class="meta" style="margin-top:8px">Las señales críticas salen apenas se detectan (cada 15 min). El digest diario recorre advertencia{% if settings.digest_include_preventivo == '1' %} y preventivo{% endif %}.</p>
 {% endblock %}

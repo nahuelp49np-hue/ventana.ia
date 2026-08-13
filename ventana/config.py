@@ -17,9 +17,8 @@ DATA_DIR.mkdir(exist_ok=True)
 UPLOAD_DIR.mkdir(parents=True, exist_ok=True)
 
 SECRET_KEY = os.getenv("SECRET_KEY", "dev-ventana-no-usar-en-produccion")
-XAI_API_KEY = os.getenv("XAI_API_KEY", "").strip()
-XAI_MODEL = os.getenv("XAI_MODEL", "grok-4.6").strip() or "grok-4.6"
-XAI_BASE_URL = "https://api.x.ai/v1"
+GEMINI_API_KEY = os.getenv("GEMINI_API_KEY", "").strip()
+GEMINI_MODEL = os.getenv("GEMINI_MODEL", "gemini-2.5-flash").strip() or "gemini-2.5-flash"
 
 HOST = os.getenv("HOST", "0.0.0.0")
 PORT = int(os.getenv("PORT", "5202"))

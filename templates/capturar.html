@@ -1,27 +1,9 @@
 {% extends "base.html" %}
 {% block content %}
-<p style="max-width:32rem;margin:0 0 8px">La lectura arma los productos. Vos solo asignás el vencimiento.</p>
+<p style="max-width:32rem;margin:0 0 18px">Apuntá a la carátula. Gemini lee cada producto. Vos solo asignás el vencimiento.</p>
 
-{% if examples %}
-<p class="kicker" style="margin-top:18px">
-  <span class="idx">01</span>
-  <span class="rule"></span>
-  <span>Carátulas listas</span>
-</p>
-<div class="stack" style="margin-bottom:28px">
-  {% for ex in examples %}
-  <a class="btn btn-block" href="/capturar/ejemplo/{{ ex.slug }}">{{ ex.title }}</a>
-  {% endfor %}
-</div>
-{% endif %}
-
-<p class="kicker">
-  <span class="idx">02</span>
-  <span class="rule"></span>
-  <span>O una foto nueva</span>
-</p>
 {% if not vision_on %}
-<p class="meta" style="margin:0 0 12px">Si la foto es una de las carátulas de JoseG (Amstel / Arcor), se reconoce sola. Para papeles nuevos hace falta XAI_API_KEY.</p>
+<p class="flash flash-advertencia">Visión apagada. Falta GEMINI_API_KEY.</p>
 {% endif %}
 
 <form id="form-captura" action="/capturar" method="post" enctype="multipart/form-data">

@@ -15,7 +15,7 @@ El documento de trabajo del depósito no es el remito del proveedor: es el **Rep
 
 ```
                     ┌──────────────────────┐
-   foto carátula →  │  visión (Grok 4.6)   │
+   foto carátula →  │  visión (Gemini)     │
    (Logicom/Logex)  │  extracción líneas   │
                     └──────────┬───────────┘
                                ▼
@@ -38,12 +38,12 @@ El documento de trabajo del depósito no es el remito del proveedor: es el **Rep
 |---|---|---|
 | Superficie | FastAPI + Jinja2 + CSS propio | Craft Runa + mobile-first real. Streamlit no puede. |
 | Datos | SQLite (WAL) | Cero ops. Migrable a Postgres sin reescribir dominio. |
-| Visión | SpaceXAI / Grok 4.6 (`XAI_API_KEY`) | Documento + imagen en un solo modelo. Sin Paddle + LLM en el depósito. |
+| Visión | Google Gemini (`GEMINI_API_KEY`) | Documento + imagen. Extrae cada línea de la carátula. |
 | Alertas | Telegram Bot API | El canal que el encargado ya tiene abierto. |
 | Jobs | APScheduler in-process | Digest diario + tick de críticos. Sin Redis. |
 | Auth | sesión firmada + PBKDF2 | Dos roles. Sin IdP. |
 
-Fallback: si no hay `XAI_API_KEY`, la captura sigue viva. Se carga la foto (o no) y las líneas se escriben a mano. El sistema nunca depende de la IA para existir.
+Fallback: si no hay `GEMINI_API_KEY`, la captura avisa y no inventa líneas. El control de lotes sigue andando.
 
 ### Árbol
 
@@ -128,8 +128,8 @@ Migración futura a Postgres: el SQL es ANSI de propósito. Cambiar el conector 
 1. **Abre ventana.ia** en el celular (PWA / Safari / Chrome). Login `deposito`.
 2. Toca **CAPTURAR**. El kicker dice `01 // CAPTURA DE INGRESO`.
 3. Toca el frame. Se abre la cámara trasera (`capture=environment`). Dispara a la **carátula** (Reporte de Movimientos) sobre la mesa. También sirve un remito de proveedor.
-4. Toca **ACTIVAR LECTURA**. Scan line. Grok 4.6 recibe la imagen (lado máximo 2048, JPEG).
-5. El modelo reconoce carátula Logicom/Logex: número de carátula, FC, operador, líneas. Ignora RSC/VTA y el total. Suma ajustes negativos del mismo producto (ej. Topline +24 y −12 → 12). Match contra el catálogo Vivar.
+4. Toca **Leer productos**. Scan line. Gemini recibe la imagen (lado máximo 2048, JPEG).
+5. El modelo reconoce carátula Logicom/Logex: número de carátula, FC, operador, líneas. Ignora RSC/VTA y el total. Suma ajustes negativos del mismo producto (ej. Topline +24 y −12 → 12).
 6. Cae en **REVISIÓN**. El operario corrige una cantidad, borra una línea de IVA que se coló, toca `+15` en “aplicar a todas” porque este proveedor es lácteo de quincena. Ajusta dos líneas que vencen antes.
 7. Toca **CONFIRMAR INGRESO**. Flash rune. Nacen los lotes. Copy: `Ingreso activado.`
 8. En **CONTROL**, esos lotes aparecen en la tira (preventivo / estable / el que corresponda).

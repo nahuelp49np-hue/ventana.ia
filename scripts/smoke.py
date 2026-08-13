@@ -40,8 +40,10 @@ def main() -> int:
 
         r = client.get("/capturar")
         assert r.status_code == 200
-        assert "carátula" in r.text.lower()
-        assert "Carátula 1652" in r.text
+        assert "Leer productos" in r.text
+        assert "Carátula 1652" not in r.text
+        assert "Amstel" not in r.text
+        assert "1647" not in r.text
 
         r = client.post("/capturar", follow_redirects=False)
         assert r.status_code == 303
@@ -96,63 +98,11 @@ def main() -> int:
 
         r = client.get("/productos")
         assert r.status_code == 200
-        assert "Leche Tregar" in r.text
 
         r = client.get("/capturar/ejemplo/caratula-1652", follow_redirects=False)
-        assert r.status_code == 303
-        loc = r.headers["location"]
-        r = client.get(loc)
-        assert r.status_code == 200
-        assert "C-1652" in r.text
-        assert "CERVEZA AMSTEL LAGER RETORNABLE X1LT" in r.text
-        assert "CERVEZA AMSTEL LAGER LATA 473cc.Nva" in r.text
-        assert "240" in r.text
-        assert r.text.count("prod-card") >= 2
-        assert r.text.count("prod-card") >= 2
-        assert "data-line-none" in r.text
-        assert "Aplicar vencimiento a todas" not in r.text
-        intake_amstel = loc.rsplit("/", 1)[-1]
-        r = client.post(
-            f"/ingreso/{intake_amstel}/confirmar",
-            data={
-                "supplier": "Ingreso LOGEX",
-                "document_number": "C-1652 · FC 6-1425109",
-                "document_date": "2026-08-13",
-                "line_name": [
-                    "CERVEZA AMSTEL LAGER RETORNABLE X1LT",
-                    "CERVEZA AMSTEL LAGER LATA 473cc.Nva",
-                ],
-                "line_qty": ["12", "240"],
-                "line_unit": ["un", "un"],
-                "line_expires": ["2026-11-13", ""],
-                "line_novence": ["0", "1"],
-                "line_notes": ["", ""],
-                "line_product_id": ["", ""],
-            },
-            follow_redirects=False,
-        )
-        assert r.status_code == 303, r.text
-        r = client.get("/control")
-        assert "AMSTEL LAGER RETORNABLE" in r.text or "Amstel" in r.text
-        assert "no vence" in r.text.lower()
+        assert r.status_code == 404
 
-        from ventana.fixtures import image_path, load_example
-        from ventana.recognize import match_known_caratula
         from ventana.vision import net_adjustments, parse_logicom_number
-
-        amstel_img = image_path("caratula-1652")
-        assert amstel_img and match_known_caratula(amstel_img) == "caratula-1652"
-        with amstel_img.open("rb") as fh:
-            r = client.post(
-                "/capturar",
-                files={"foto": ("caratula-1652.jpg", fh, "image/jpeg")},
-                follow_redirects=False,
-            )
-        assert r.status_code == 303
-        r = client.get(r.headers["location"])
-        assert "CERVEZA AMSTEL LAGER RETORNABLE X1LT" in r.text
-        assert "12" in r.text
-        assert "240" in r.text
 
         assert parse_logicom_number("1,328.00") == 1328
         assert parse_logicom_number("12.00") == 12
@@ -164,11 +114,6 @@ def main() -> int:
             ]
         )
         assert len(netted) == 1 and netted[0]["quantity"] == 12
-        gold = load_example("caratula-1647")
-        assert gold is not None
-        assert gold["document_number"].startswith("C-1647")
-        assert len(gold["lines"]) == 29
-        assert any("ajuste" in (ln.get("notes") or "") for ln in gold["lines"])
 
         print("SYS.VENTANA  ·  SMOKE OK")
         return 0

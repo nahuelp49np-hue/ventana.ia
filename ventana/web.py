@@ -37,8 +37,6 @@ from ventana.config import (
     TZ_NAME,
     UPLOAD_DIR,
 )
-from ventana.fixtures import image_path as fixture_image, list_examples, load_example
-from ventana.recognize import extract_known
 from ventana.risk import LABELS, NO_EXPIRY, STATUS_LABELS, annotate, days_left, is_non_expiring
 from ventana.seed import seed_if_empty
 from ventana.vision import extract_document, vision_available
@@ -325,7 +323,6 @@ async def capturar_get(request: Request):
             page_title="captura — ventana.ia",
             kicker="CAPTURA DE INGRESO",
             kicker_index="01",
-            examples=list_examples(),
         ),
     )
 
@@ -360,48 +357,26 @@ async def capturar_post(request: Request):
     else:
         foto = None
     if not (foto and (getattr(foto, "filename", None) or "")):
-        flash(request, "Elegí una foto o tocá una carátula de ejemplo.", "advertencia")
+        flash(request, "Sacá o elegí una foto de la carátula.", "advertencia")
         return RedirectResponse("/capturar", status_code=303)
     saved = _save_upload(foto)
     if not saved:
         flash(request, "La foto supera 12 MB o no se pudo guardar.", "advertencia")
         return RedirectResponse("/capturar", status_code=303)
     photo_path = str(saved.relative_to(ROOT)).replace("\\", "/")
-    extracted = extract_known(saved)
-    if not extracted:
-        extracted = extract_document(saved)
+    extracted = extract_document(saved)
     if not (extracted.get("lines") or []):
+        detail = ""
+        warns = extracted.get("warnings") or []
+        if warns:
+            detail = " " + warns[0]
         flash(
             request,
-            "No se leyeron productos. Tocá la carátula de ejemplo (Amstel / Arcor) o configurá la visión.",
+            "No se leyeron productos." + detail,
             "critico",
         )
         return RedirectResponse("/capturar", status_code=303)
     intake_id = _intake_from_extraction(user, extracted, photo_path)
-    return RedirectResponse(f"/ingreso/{intake_id}", status_code=303)
-
-
-@app.get("/capturar/ejemplo/{slug}")
-@app.post("/capturar/ejemplo/{slug}")
-@login_required
-async def capturar_ejemplo(request: Request, slug: str):
-    user = current_user(request)
-    extracted = load_example(slug)
-    if not extracted:
-        flash(request, "Esa carátula de ejemplo no existe.", "advertencia")
-        return RedirectResponse("/capturar", status_code=303)
-    photo_path = None
-    src = fixture_image(slug)
-    if src:
-        dest = UPLOAD_DIR / f"fixture_{slug}_{uuid.uuid4().hex[:8]}{src.suffix}"
-        shutil.copyfile(src, dest)
-        photo_path = str(dest.relative_to(ROOT)).replace("\\", "/")
-    extracted.setdefault("warnings", [])
-    extracted["warnings"] = [
-        "Lectura de oro de carátula real (13.08). La visión, cuando esté encendida, usa esta misma regla."
-    ] + list(extracted.get("warnings") or [])
-    intake_id = _intake_from_extraction(user, extracted, photo_path)
-    flash(request, "Carátula de ejemplo cargada. Asigná vencimiento y confirmá.", "ok")
     return RedirectResponse(f"/ingreso/{intake_id}", status_code=303)
 
 
