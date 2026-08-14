@@ -87,7 +87,7 @@ La base arranca vacía. Los lotes nacen cuando el depósito confirma un ingreso.
 
 1. Creá una clave en [Google AI Studio](https://aistudio.google.com/apikey)
 2. En `.env` (o en Render → Environment): `GEMINI_API_KEY=...`
-3. Opcional: `GEMINI_MODEL=gemini-2.5-flash`
+3. Opcional: `GEMINI_MODEL=gemini-3.5-flash` (si Render tiene 1.5 o 2.5, borralo)
 4. Reiniciá. En Captura, la foto se lee con **Gemini**.
 
 Sin clave, el sistema no extrae productos de la foto.

@@ -7,7 +7,7 @@ from collections import OrderedDict
 from pathlib import Path
 from typing import Any
 
-from ventana.config import GEMINI_API_KEY, GEMINI_MODEL
+from ventana.config import GEMINI_API_KEY, GEMINI_MODEL, GEMINI_MODEL_FALLBACKS
 
 EXTRACT_PROMPT = """Sos el lector de documentos de ventana.ia, sistema de control de vida útil de Súper Vivar (Posadas, Misiones, Argentina).
 
@@ -291,29 +291,77 @@ def extract_document(image_path: Path) -> dict[str, Any]:
     try:
         from google import genai
         from google.genai import types
-
-        client = genai.Client(api_key=GEMINI_API_KEY)
-        response = client.models.generate_content(
-            model=GEMINI_MODEL,
-            contents=[
-                EXTRACT_PROMPT,
-                types.Part.from_bytes(data=jpeg, mime_type="image/jpeg"),
-            ],
-            config=types.GenerateContentConfig(
-                temperature=0.1,
-                response_mime_type="application/json",
-            ),
-        )
-        text = getattr(response, "text", None) or ""
-        if not text:
-            empty["warnings"] = ["Gemini no devolvió texto."]
-            return empty
-        parsed = normalize(_parse_json(text))
-        parsed["raw_text"] = text
-        if not parsed["lines"]:
-            parsed["warnings"].append("La lectura no encontró líneas de producto.")
-        return parsed
     except Exception as exc:
-        empty["warnings"] = [f"La lectura falló: {exc}"]
-        empty["raw_text"] = str(exc)
+        empty["warnings"] = [f"No se pudo cargar el SDK de Gemini: {exc}"]
         return empty
+
+    client = genai.Client(api_key=GEMINI_API_KEY)
+    tried: list[str] = []
+    last_error = ""
+    for model in _model_candidates():
+        tried.append(model)
+        try:
+            response = client.models.generate_content(
+                model=model,
+                contents=[
+                    EXTRACT_PROMPT,
+                    types.Part.from_bytes(data=jpeg, mime_type="image/jpeg"),
+                ],
+                config=types.GenerateContentConfig(
+                    temperature=0.1,
+                    response_mime_type="application/json",
+                ),
+            )
+            text = getattr(response, "text", None) or ""
+            if not text:
+                last_error = f"{model}: sin texto"
+                continue
+            parsed = normalize(_parse_json(text))
+            parsed["raw_text"] = text
+            if model != GEMINI_MODEL:
+                parsed["warnings"].append(f"Modelo activo: {model}")
+            if not parsed["lines"]:
+                parsed["warnings"].append("La lectura no encontró líneas de producto.")
+            return parsed
+        except Exception as exc:
+            last_error = f"{model}: {exc}"
+            if not _is_missing_model(exc):
+                empty["warnings"] = [f"La lectura falló: {exc}"]
+                empty["raw_text"] = str(exc)
+                return empty
+
+    empty["warnings"] = [
+        f"Ningún modelo Gemini respondió ({', '.join(tried)}). Último error: {last_error}"
+    ]
+    empty["raw_text"] = last_error
+    return empty
+
+
+def _model_candidates() -> list[str]:
+    ordered: list[str] = []
+    for name in (GEMINI_MODEL, *GEMINI_MODEL_FALLBACKS):
+        if name and name not in ordered:
+            ordered.append(name)
+    return ordered
+
+
+def _is_missing_model(exc: Exception) -> bool:
+    text = str(exc).lower()
+    return any(
+        token in text
+        for token in (
+            "not found",
+            "not_found",
+            "404",
+            "is not found for api version",
+            "not supported for generatecontent",
+            "no longer available",
+            "not available to new users",
+            "not available",
+            "unavailable",
+            "deprecated",
+            "retired",
+            "has been shut down",
+            "failed_precondition",
+        )
+    )
